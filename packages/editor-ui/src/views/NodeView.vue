@@ -1424,6 +1424,8 @@ export default mixins(
 						const importConfirm = await this.confirmMessage(`When you switch workflows your current workflow changes will be lost.`, 'Save your Changes?', 'warning', 'Yes, switch workflows and forget changes');
 						if (importConfirm === false) {
 							return Promise.resolve();
+						} else {
+							this.$store.commit('setStateDirty', false);
 						}
 					}
 
@@ -1438,8 +1440,14 @@ export default mixins(
 						// Open existing workflow
 						await this.openWorkflow(workflowId);
 					} else {
-						// Create new workflow
-						await this.newWorkflow();
+						// Check for WIP workflow in local storage
+						const localStorageWorkflow = this.$store.getters.getWorkflowFromLocalStorage;
+						if(localStorageWorkflow && !result) {
+							await this.importWorkflowData(localStorageWorkflow as IWorkflowDataUpdate);
+						} else {
+							// Create new workflow
+							await this.newWorkflow();
+						}
 					}
 				}
 

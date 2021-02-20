@@ -28,6 +28,7 @@ import {
 	INodeUpdatePropertiesInformation,
 	IUpdateInformation,
 	XYPositon,
+	IWorkflowDataUpdate,
 } from './Interface';
 
 Vue.use(Vuex);
@@ -144,6 +145,7 @@ export const store = new Vuex.Store({
 			if (index === -1) {
 				state.activeWorkflows.push(workflowId);
 			}
+			updateWorkflowInLocalStorage(state.stateIsDirty, state.workflow);
 		},
 		setWorkflowInactive (state, workflowId: string) {
 			const index = state.activeWorkflows.indexOf(workflowId);
@@ -155,7 +157,7 @@ export const store = new Vuex.Store({
 		// ** Dirty: if current workflow state has been synchronized with database AKA has it been saved
 		setStateDirty (state, dirty : boolean) {
 			state.stateIsDirty = dirty;
-			saveWorkflowToLocalStorage(dirty, state.workflow);
+			updateWorkflowInLocalStorage(dirty, state.workflow);
 		},
 
 		// Selected Nodes
@@ -228,6 +230,7 @@ export const store = new Vuex.Store({
 				state.workflow.connections[sourceData.node][sourceData.type][sourceData.index].push(destinationData);
 			}
 
+			updateWorkflowInLocalStorage(state.stateIsDirty, state.workflow);
 		},
 		removeConnection (state, data) {
 			const sourceData = data.connection[0];
@@ -253,6 +256,7 @@ export const store = new Vuex.Store({
 				}
 			}
 
+			updateWorkflowInLocalStorage(state.stateIsDirty, state.workflow);
 		},
 		removeAllConnections (state, data) {
 			if (data && data.setStateDirty === true) {
@@ -287,6 +291,7 @@ export const store = new Vuex.Store({
 					}
 				}
 			}
+			updateWorkflowInLocalStorage(state.stateIsDirty, state.workflow);
 		},
 
 		// Credentials
@@ -339,6 +344,7 @@ export const store = new Vuex.Store({
 			if (state.lastSelectedNode === nameData.old) {
 				state.lastSelectedNode = nameData.new;
 			}
+			updateWorkflowInLocalStorage(state.stateIsDirty, state.workflow);
 		},
 
 		resetAllNodesIssues (state) {
@@ -390,6 +396,7 @@ export const store = new Vuex.Store({
 				state.stateIsDirty = true;
 			}
 			state.workflow.name = data.newName;
+			updateWorkflowInLocalStorage(state.stateIsDirty, state.workflow);
 		},
 
 		// Nodes
@@ -410,12 +417,14 @@ export const store = new Vuex.Store({
 					return;
 				}
 			}
+			updateWorkflowInLocalStorage(state.stateIsDirty, state.workflow);
 		},
 		removeAllNodes (state, data) {
 			if (data.setStateDirty === true) {
 				state.stateIsDirty = true;
 			}
 			state.workflow.nodes.splice(0, state.workflow.nodes.length);
+			updateWorkflowInLocalStorage(state.stateIsDirty, state.workflow);
 		},
 		updateNodeProperties (state, updateInformation: INodeUpdatePropertiesInformation) {
 			// Find the node that should be updated
@@ -429,6 +438,7 @@ export const store = new Vuex.Store({
 					Vue.set(node, key, updateInformation.properties[key]);
 				}
 			}
+			updateWorkflowInLocalStorage(state.stateIsDirty, state.workflow);
 		},
 		setNodeValue (state, updateInformation: IUpdateInformation) {
 			// Find the node that should be updated
@@ -442,6 +452,7 @@ export const store = new Vuex.Store({
 
 			state.stateIsDirty = true;
 			Vue.set(node, updateInformation.key, updateInformation.value);
+			updateWorkflowInLocalStorage(state.stateIsDirty, state.workflow);
 		},
 		setNodeParameters (state, updateInformation: IUpdateInformation) {
 			// Find the node that should be updated
@@ -455,6 +466,7 @@ export const store = new Vuex.Store({
 
 			state.stateIsDirty = true;
 			Vue.set(node, 'parameters', updateInformation.value);
+			updateWorkflowInLocalStorage(state.stateIsDirty, state.workflow);
 		},
 
 		// Node-Index
@@ -834,10 +846,10 @@ export const store = new Vuex.Store({
 			}
 			return workflowRunData[nodeName];
 		},
-		getWorkflowFromLocalStorage: (): IWorkflowDb | null => {
+		getWorkflowFromLocalStorage: (): IWorkflowDataUpdate | null => {
 			const localStorageWf = localStorage.getItem(N8N_LOCALSTORAGE_WF_KEY);
 			if(localStorageWf) {
-				return JSON.parse(localStorageWf) as IWorkflowDb;
+				return JSON.parse(localStorageWf) as IWorkflowDataUpdate;
 			}
 
 			return null;
@@ -849,8 +861,10 @@ export const store = new Vuex.Store({
 
 // Helpers
 
-function saveWorkflowToLocalStorage(dirtyState: boolean, workflow: IWorkflowDb) {
+function updateWorkflowInLocalStorage(dirtyState: boolean, workflow: IWorkflowDataUpdate) {
 	if(dirtyState) {
 		localStorage.setItem(N8N_LOCALSTORAGE_WF_KEY, JSON.stringify(workflow));
+	} else {
+		localStorage.removeItem(N8N_LOCALSTORAGE_WF_KEY);
 	}
 }
