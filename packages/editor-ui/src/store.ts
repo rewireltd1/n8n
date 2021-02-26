@@ -2,7 +2,7 @@
 import Vue from 'vue';
 import Vuex from 'vuex';
 
-import { PLACEHOLDER_EMPTY_WORKFLOW_ID, N8N_LOCALSTORAGE_WF_KEY } from '@/constants';
+import { PLACEHOLDER_EMPTY_WORKFLOW_ID, N8N_LOCALSTORAGE_WF_KEY_PREFIX } from '@/constants';
 
 import {
 	IConnection,
@@ -157,7 +157,9 @@ export const store = new Vuex.Store({
 		// ** Dirty: if current workflow state has been synchronized with database AKA has it been saved
 		setStateDirty (state, dirty : boolean) {
 			state.stateIsDirty = dirty;
-			updateWorkflowInLocalStorage(dirty, state.workflow);
+			if(!dirty) {
+				updateWorkflowInLocalStorage(false, state.workflow);
+			}
 		},
 
 		// Selected Nodes
@@ -610,6 +612,10 @@ export const store = new Vuex.Store({
 			Vue.set(state, 'nodeTypes', updatedNodes);
 			state.nodeTypes = updatedNodes;
 		},
+
+		saveWorkflowToLocalStorage (state) {
+			localStorage.setItem(`${N8N_LOCALSTORAGE_WF_KEY_PREFIX}${state.workflow.id}`, JSON.stringify(state.workflow));
+		},
 	},
 	getters: {
 
@@ -846,10 +852,10 @@ export const store = new Vuex.Store({
 			}
 			return workflowRunData[nodeName];
 		},
-		getWorkflowFromLocalStorage: (): IWorkflowDataUpdate | null => {
-			const localStorageWf = localStorage.getItem(N8N_LOCALSTORAGE_WF_KEY);
+		getWorkflowFromLocalStorage: () => (workflowId: string): IWorkflowDb | null => {
+			const localStorageWf = localStorage.getItem(`${N8N_LOCALSTORAGE_WF_KEY_PREFIX}${workflowId}`);
 			if(localStorageWf) {
-				return JSON.parse(localStorageWf) as IWorkflowDataUpdate;
+				return JSON.parse(localStorageWf) as IWorkflowDb;
 			}
 
 			return null;
@@ -861,10 +867,13 @@ export const store = new Vuex.Store({
 
 // Helpers
 
-function updateWorkflowInLocalStorage(dirtyState: boolean, workflow: IWorkflowDataUpdate) {
+function updateWorkflowInLocalStorage(dirtyState: boolean, workflow: IWorkflowDb) {
+	const localStoredWorkflow = localStorage.getItem(`${N8N_LOCALSTORAGE_WF_KEY_PREFIX}${workflow.id}`);
 	if(dirtyState) {
-		localStorage.setItem(N8N_LOCALSTORAGE_WF_KEY, JSON.stringify(workflow));
+		if(localStoredWorkflow) {
+			localStorage.setItem(`${N8N_LOCALSTORAGE_WF_KEY_PREFIX}${workflow.id}`, JSON.stringify(workflow));
+		}
 	} else {
-		localStorage.removeItem(N8N_LOCALSTORAGE_WF_KEY);
+		localStorage.removeItem(`${N8N_LOCALSTORAGE_WF_KEY_PREFIX}${workflow.id}`);
 	}
 }
