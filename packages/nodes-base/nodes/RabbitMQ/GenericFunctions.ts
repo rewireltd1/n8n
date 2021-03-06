@@ -15,6 +15,7 @@ export async function rabbitmqConnect(this: IExecuteFunctions | ITriggerFunction
 		'username',
 		'password',
 		'vhost',
+		'servername'
 	];
 
 	const credentialData: IDataObject = {};
@@ -30,6 +31,7 @@ export async function rabbitmqConnect(this: IExecuteFunctions | ITriggerFunction
 		optsData.key = credentials.key === '' ? undefined : Buffer.from(credentials.key as string);
 		optsData.passphrase = credentials.passphrase === '' ? undefined : credentials.passphrase;
 		optsData.ca = credentials.ca === '' ? undefined : [Buffer.from(credentials.ca as string)];
+		optsData.servername = credentials.servername === '' ? undefined : credentials.servername;
 		optsData.credentials = amqplib.credentials.external();
 	}
 

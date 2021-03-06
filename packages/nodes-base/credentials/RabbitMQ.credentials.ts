@@ -122,6 +122,20 @@ export class RabbitMQ implements ICredentialType {
 			default: '',
 			description: 'SSL CA Certificates to use.',
 		},
+		{
+			displayName: 'Server Name',
+			name: 'servername',
+			type: 'string' as NodePropertyTypes,
+			displayOptions: {
+				show: {
+					ssl: [
+						true,
+					],
+				},
+			},
+			default: '',
+			placeholder: 'localhost',
+		},
 		// {
 		// 	displayName: 'Client ID',
 		// 	name: 'clientId',
